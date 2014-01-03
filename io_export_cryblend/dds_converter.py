@@ -54,10 +54,24 @@ class _DdsConverter:
             tiff_image_path = self.__get_temp_tiff_image_path(image)
 
             tiff_image_for_rc = utils.get_absolute_path_for_rc(tiff_image_path)
-
+            
+            #check if we have a normal texture
+            if ("_ddn" in image.name):
+                # make a copy to prevent editing the original image
+                normal_temp_image = image.copy()
+                self.__invert_green_channel(normal_temp_image)
+                # save to file and delete the temporary image
+                normal_temp_image.save()
+                bpy.data.images.remove(normal_temp_image)
+                
             rc_process = utils.run_rc(self.__rc_exe,
                                       tiff_image_for_rc,
                                       rc_params)
+               
+            # re-save the original image after running the RC to 
+            #   prevent the original one from getting lost
+            if ("_ddn" in image.name):
+                image.save()
 
             rc_process.wait()
 
@@ -78,14 +92,32 @@ class _DdsConverter:
 
         return rc_params
 
+    def __invert_green_channel(self, image):
+        # creating a direct copy "pixels = image.pixels" is incredibly slow
+        pixels = list(image.pixels)
+
+        for i in range(0, len(pixels), 4):
+            pixels[i+1] = 1.0 - pixels[i+1]
+        image.pixels = pixels
+        
+        # not sure if necessary
+        image.update()
+
     def __get_temp_tiff_image_path(self, image):
+        # check if the image already is a .tif
+        image_extension = utils.get_extension_from_path(image.filepath)
+        
+        if ".tif" == image_extension:
+            cbPrint("Image {!r} is already a tif, not converting".format(image.name), 'info')
+            return image.filepath
+
         tiff_image_path = utils.get_path_with_new_extension(image.filepath,
                                                             "tif")
         tiff_image_absolute_path = utils.get_absolute_path(tiff_image_path)
         tiff_file_name = os.path.basename(tiff_image_path)
 
         tmp_file_path = os.path.join(self.__tmp_dir, tiff_file_name)
-
+        
         if tiff_image_path != image.filepath:
             self.__save_as_tiff(image, tmp_file_path)
             self.__tmp_images[tmp_file_path] = (tiff_image_absolute_path)
