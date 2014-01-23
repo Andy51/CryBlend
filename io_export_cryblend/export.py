@@ -73,9 +73,9 @@ class CrytekDaeExporter:
         # so 'Textures' has to be removed from start path
         normalized_path = os.path.normpath(config.textures_dir)
         self.__textures_parent_directory = os.path.dirname(normalized_path)
-        cbPrint("Normalized textures direcotry: {!r}".format(normalized_path),
+        cbPrint("Normalized textures directory: {!r}".format(normalized_path),
                 'debug')
-        cbPrint("Textures parent direcotry: {!r}".format(
+        cbPrint("Textures parent directory: {!r}".format(
                                             self.__textures_parent_directory),
                 'debug')
 
@@ -142,6 +142,10 @@ class CrytekDaeExporter:
         return [Object for Object in Parent.children
                 if Object.type in {'ARMATURE', 'EMPTY', 'MESH'}]
 
+    def __process_bone_name(self, bname, nodeName):
+        #return bname.replace(' ', '_') + '%' + nodeName + '%' + '--PRprops_name=' + bname.replace(' ', '*') + '_'
+        return bname.replace(' ', '_') + '--PRprops_name=' + bname.replace(' ', '*') + '__'
+    
     def wbl(self, pname, bones, obj, node1):
         cbPrint("{!r} bones".format(len(bones)))
         boneExtendedNames = []
@@ -156,12 +160,16 @@ class CrytekDaeExporter:
             pExtension = ''
 
             # Name Extension
+            if self.__config.export_type == 'CHR':
+                exportNodeName = node1.getAttribute('id')[14:]
+                bname = self.__process_bone_name(bname, exportNodeName)
+            '''
             if (self.__config.include_ik and "_Phys" == bone.name[-5:]):
                 exportNodeName = node1.getAttribute('id')[14:]
                 starredBoneName = bone.name.replace("_", "*")
                 pExtension += '%' + exportNodeName + '%'
                 pExtension += '--PRprops_name=' + starredBoneName + '_'
-
+            '''
             # IK
             if ("_Phys" == bone.name[-5:] and self.__config.include_ik):
                 poseBone = (bpy.data.objects[obj.name[:-5]]
@@ -271,8 +279,14 @@ class CrytekDaeExporter:
                             nodename.appendChild(ig)
 
             if bprnt:
+                # Name Extension
+                if self.__config.export_type == 'CHR':
+                    exportNodeName = node1.getAttribute('id')[14:]
+                    bprntname = self.__process_bone_name(bprnt.name, exportNodeName)
+                
                 for name in boneExtendedNames:
-                    if name[:len(bprnt.name)] == bprnt.name:
+                    # TODO: Add check for _Phys parents
+                    if name == bprntname:
                         nodeparent = self.__doc.getElementById(name)
                         cbPrint(bprnt.name)
                         nodeparent.appendChild(nodename)
@@ -686,7 +700,7 @@ class CrytekDaeExporter:
         return animation_element
 
     def __get_bone_names_for_idref(self, bones):
-        return " ".join(bone.name for bone in bones)
+        return " ".join( self.__process_bone_name(bone.name, '') for bone in bones)
 
     def __export_float_array(self, armature_bones, float_array):
         for bone in armature_bones:
@@ -1103,7 +1117,7 @@ class CrytekDaeExporter:
             object_.data.update(calc_tessface=1)
             mesh = object_.data
             me_verts = mesh.vertices[:]
-            mname = object_.name
+            mname = object_.name.replace(' ', '_')
             geo = self.__doc.createElement("geometry")
             geo.setAttribute("id", "%s" % (mname))
             me = self.__doc.createElement("mesh")
@@ -1261,10 +1275,8 @@ class CrytekDaeExporter:
             if uvlay:
                 cbPrint("Found UV map.")
             elif (object_.type == "MESH"):
+                bpy.ops.mesh.uv_texture_add()
                 cbPrint("Your UV map is missing, adding.")
-                override = {'object': object_}
-                bpy.ops.mesh.uv_texture_add(override)
-
             for uvindex, uvlayer in enumerate(uvlay):
                 mapslot = uvindex
                 mapname = str(uvlayer.name)
@@ -1609,6 +1621,7 @@ class CrytekDaeExporter:
                          % (armature.name, object_.name))
         jnts.appendChild(is1)
 
+        
         is2 = self.__doc.createElement("input")
         is2.setAttribute("semantic", "INV_BIND_MATRIX")
         is2.setAttribute("source", "#%s_%s_matrices"
@@ -1937,6 +1950,9 @@ class CrytekDaeExporter:
             if self.__config.export_type == 'CHR & CAF':
                 pchrcaf = self.__doc.createTextNode("fileType=chrcaf")
                 prop1.appendChild(pchrcaf)
+            if self.__config.export_type == 'CHR':
+                pchr = self.__doc.createTextNode("fileType=chr")
+                prop1.appendChild(pchr)
             if self.__config.donot_merge:
                 pdnm = self.__doc.createTextNode("DoNotMerge")
                 prop1.appendChild(pdnm)

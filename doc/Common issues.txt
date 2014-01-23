@@ -1,0 +1,9 @@
+
+
+	W: 1>  0:01 #443 Joint index out of range in 'v' node (index=5, jointCount=0)
+	W: 1>  0:00 #440 'input' tag (semantic 'JOINT') wrong number of joints - skipping input.
+Possible space in bone name. Convert spaces to __
+
+	Crashing on adding SLAVE skeleton to MASTER
+Possible bones in SLAVE skeleton that don'te exist in MASTER. Look in editor.log for which one
+
