@@ -33,7 +33,7 @@ bl_info = {
     "name": "CryEngine3 Utilities and Exporter",
     "author": "Angelo J. Miner, Duo Oratar, Mikołaj Milej",
     "blender": (2, 60, 0),
-    "version": (4, 12, 1, 1, 'dev'),
+    "version": (4, 12, 3, 1, 'dev'),
     "location": "CryBlend Menu",
     "description": "CryEngine3 Utilities and Exporter",
     "warning": "",
@@ -555,6 +555,7 @@ class Remove_All_Weight(bpy.types.Operator):
                         g.weight = 0
             return {'FINISHED'}
 
+
 class Remove_FakeBones(bpy.types.Operator):
         bl_label = "Remove All FakeBones"
         bl_idname = "cb.fake_bone_remove"
@@ -1042,18 +1043,6 @@ def add_kfl(self, context):
             cbPrint("Stage 1 auto-keyframe.")
             scene.frame_set(frame)
             for bone in object_.pose.bones:
-                '''
-                loc = bone.head
-                rot = bone.rotation_quaternion
-                if bone.parent:
-                    loc = loc - bone.parent.head
-                    rot = rot - bone.parent.rotation_quaternion
-                ltmp = [frame, bone.name, loc]
-                rtmp = [frame, bone.name, rot.to_euler()]
-                loclist.append(ltmp)
-                rotlist.append(rtmp)
-                cbPrint("Bone {!r} has location {!r}".format(bone.name, loc))
-                '''
                 if bone.parent:
                     if bone.parent.parent:
                         for bonep in bpy.context.scene.objects:
@@ -1172,12 +1161,14 @@ class Export(bpy.types.Operator, ExportHelper):
             items=(
                 ("CGF", "CGF",
                  "Static geometry"),
+                ("CGA & ANM", "CGA",
+                "Hard body animated geometry."),
+                ("CHR", "CHR",
+                "Just the CHR for characters/weapons.")
                 ("CHR & CAF", "CHR & CAF",
                  "Flexible animated geometry, i.e. characters."),
-                ("CGA & ANM", "CGA",
-                 "Hard body animated geometry."),
-                ("CHR", "CHR",
-                 "Just the CHR for characters/weapons.")
+
+
             ),
             default="CGF",
     )
@@ -1364,7 +1355,7 @@ class Mesh_Repair_Tools(bpy.types.Menu):
         layout.operator("mesh_rep.underweight", icon='MESH_CUBE')
         layout.operator("mesh_rep.overweight", icon='MESH_CUBE')
         layout.operator("mesh_rep.weightless", icon='MESH_CUBE')
-        layout.operator("mesh_rep.removeall", icon='MESH_CUBE')        
+        layout.operator("mesh_rep.removeall", icon='MESH_CUBE')
 
 
 class Mat_phys_add(bpy.types.Menu):

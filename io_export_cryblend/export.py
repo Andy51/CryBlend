@@ -143,9 +143,8 @@ class CrytekDaeExporter:
                 if Object.type in {'ARMATURE', 'EMPTY', 'MESH'}]
 
     def __process_bone_name(self, bname, nodeName):
-        #return bname.replace(' ', '_') + '%' + nodeName + '%' + '--PRprops_name=' + bname.replace(' ', '*') + '_'
-        return bname.replace(' ', '_') + '--PRprops_name=' + bname.replace(' ', '*') + '__'
-    
+        return "%s--PRprops-name=%s__" % (bname.replace(' ', '_'), bname.replace(' ', '*'))
+
     def wbl(self, pname, bones, obj, node1):
         cbPrint("{!r} bones".format(len(bones)))
         boneExtendedNames = []
@@ -163,13 +162,7 @@ class CrytekDaeExporter:
             if self.__config.export_type == 'CHR':
                 exportNodeName = node1.getAttribute('id')[14:]
                 bname = self.__process_bone_name(bname, exportNodeName)
-            '''
-            if (self.__config.include_ik and "_Phys" == bone.name[-5:]):
-                exportNodeName = node1.getAttribute('id')[14:]
-                starredBoneName = bone.name.replace("_", "*")
-                pExtension += '%' + exportNodeName + '%'
-                pExtension += '--PRprops_name=' + starredBoneName + '_'
-            '''
+
             # IK
             if ("_Phys" == bone.name[-5:] and self.__config.include_ik):
                 poseBone = (bpy.data.objects[obj.name[:-5]]
@@ -283,7 +276,7 @@ class CrytekDaeExporter:
                 if self.__config.export_type == 'CHR':
                     exportNodeName = node1.getAttribute('id')[14:]
                     bprntname = self.__process_bone_name(bprnt.name, exportNodeName)
-                
+
                 for name in boneExtendedNames:
                     # TODO: Add check for _Phys parents
                     if name == bprntname:
@@ -1621,7 +1614,7 @@ class CrytekDaeExporter:
                          % (armature.name, object_.name))
         jnts.appendChild(is1)
 
-        
+
         is2 = self.__doc.createElement("input")
         is2.setAttribute("semantic", "INV_BIND_MATRIX")
         is2.setAttribute("source", "#%s_%s_matrices"
